@@ -389,7 +389,7 @@ async function loadModels(){
   document.getElementById('stxt').textContent='Connecting…';
   document.getElementById('dot').className='';
   try{
-    const r = await fetch(url+'/api/tags', {mode:'cors', headers:{'ngrok-skip-browser-warning':'true'}});
+    const r = await fetch(url+'/api/tags', {mode:'cors'});
     if(!r.ok) throw new Error('HTTP '+r.status);
     const d = await r.json();
     const models = d.models||[];
@@ -596,7 +596,7 @@ async function send(){
 
   const t0=Date.now();let rtok=0;
   try{
-    const resp=await fetch(getUrl()+'/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'},body:JSON.stringify(payload)});
+    const resp=await fetch(getUrl()+'/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     if(!resp.ok)throw new Error('HTTP '+resp.status);
     typing.remove();
     const aMsg={role:'assistant',content:'',model:getModel(),time:Date.now()};
@@ -654,7 +654,7 @@ async function sendFromMessage(s,txt){
   };
   const t0=Date.now();let rtok=0;
   try{
-    const resp=await fetch(getUrl()+'/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'},body:JSON.stringify(payload)});
+    const resp=await fetch(getUrl()+'/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     if(!resp.ok)throw new Error('HTTP '+resp.status);
     typing.remove();
     const aMsg={role:'assistant',content:'',model:getModel(),time:Date.now()};
