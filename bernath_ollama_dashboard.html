@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bernath · Ollama Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --p:#5b4cf5;--p2:#7c6ff7;--pd:#5b4cf510;--pg:#5b4cf530;--ph:#ede9ff;
+  --bg0:#f8f7ff;--bg1:#ffffff;--bg2:#fafafa;--bg3:#f3f2ff;
+  --b1:#e8e6f0;--b2:#d4d0f0;--b3:#c4bef8;
+  --tx:#1a1535;--t2:#5f5a7d;--t3:#9d99b8;
+  --gn:#16a34a;--gd:#dcfce7;--gdb:#bbf7d0;
+  --am:#d97706;--ad:#fef3c7;--adb:#fde68a;
+  --rd:#dc2626;--rdd:#fee2e2;
+  --tl:#0d9488;--td:#ccfbf1;
+  --r:14px;--r2:9px;
+  --f:'Plus Jakarta Sans',sans-serif;--m:'JetBrains Mono',monospace;
+  --sh:0 1px 3px rgba(91,76,245,.07),0 4px 16px rgba(91,76,245,.05);
+  --sh2:0 2px 8px rgba(91,76,245,.10),0 8px 24px rgba(91,76,245,.07);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px}
+body{font-family:var(--f);background:var(--bg0);color:var(--tx);min-height:100vh}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:4px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* layout */
+.shell{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+
+/* sidebar */
+.sb{background:var(--bg1);border-right:1px solid var(--b1);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;box-shadow:2px 0 12px rgba(91,76,245,.04)}
+.logo{padding:22px 20px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:12px}
+.logo-ic{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--p),var(--p2));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 12px var(--pg);flex-shrink:0}
+.logo-nm{font-size:15px;font-weight:800;letter-spacing:-.03em;color:var(--tx)}
+.logo-tg{font-size:10px;color:var(--t3);font-family:var(--m);letter-spacing:.06em;margin-top:2px}
+.ng{padding:16px 0 4px}
+.nl{font-size:9px;color:var(--t3);letter-spacing:.14em;text-transform:uppercase;padding:0 20px 7px;font-weight:700}
+.ni{display:flex;align-items:center;gap:10px;padding:9px 20px;font-size:13px;color:var(--t2);cursor:pointer;margin:1px 8px;border-radius:9px;transition:all .15s;user-select:none;font-weight:500}
+.ni:hover{color:var(--p);background:var(--pd)}
+.ni.on{color:var(--p);background:var(--ph);font-weight:600}
+.nic{font-size:15px;width:20px;text-align:center}
+.nbd{margin-left:auto;font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--rd);color:#fff}
+.nbd.g{background:var(--gn)}
+.sf{margin-top:auto;padding:16px 20px;border-top:1px solid var(--b1)}
+.uav{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--p),#a78bfa);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;color:#fff}
+.uc{display:flex;align-items:center;gap:10px}
+.un{font-size:13px;font-weight:700;color:var(--tx)}
+.um{font-size:10px;color:var(--t3);font-family:var(--m)}
+.sr{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:11px;color:var(--t2)}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot.on{background:var(--gn);box-shadow:0 0 0 2px var(--gd);animation:pulse 2.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 2px var(--gd)}50%{opacity:.7;box-shadow:0 0 0 4px var(--gd)}}
+
+/* main */
+.mn{display:flex;flex-direction:column;min-height:100vh;background:var(--bg0)}
+
+/* topbar */
+.tb{background:var(--bg1);border-bottom:1px solid var(--b1);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;box-shadow:0 1px 0 var(--b1)}
+.tg{font-size:19px;font-weight:800;letter-spacing:-.04em;color:var(--tx)}
+.ts{font-size:12px;color:var(--t3);margin-top:2px}
+.tr{display:flex;align-items:center;gap:8px}
+.chip{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:99px;border:1px solid var(--b1);font-size:12px;color:var(--t2);cursor:pointer;background:var(--bg2);transition:all .15s;font-weight:500}
+.chip:hover{border-color:var(--b2);color:var(--tx)}
+.chip.ac{border-color:var(--gdb);color:var(--gn);background:var(--gd)}
+.chdot{width:6px;height:6px;border-radius:50%}
+.obtn{background:var(--p);border:none;color:#fff;font-family:var(--f);font-size:12px;font-weight:700;padding:8px 18px;border-radius:99px;cursor:pointer;transition:all .15s;box-shadow:0 4px 12px var(--pg)}
+.obtn:hover{background:var(--p2);transform:translateY(-1px);box-shadow:0 6px 16px var(--pg)}
+
+/* pages */
+.pg{display:none;flex-direction:column;gap:16px;padding:24px 28px;flex:1}
+.pg.on{display:flex}
+@keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.pg.on>*{animation:fu .3s ease both}
+
+/* kpi grid */
+.kg{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.kc{background:var(--bg1);border:1px solid var(--b1);border-radius:var(--r);padding:20px 22px;position:relative;overflow:hidden;transition:all .2s;cursor:default;box-shadow:var(--sh)}
+.kc:hover{border-color:var(--b2);transform:translateY(-2px);box-shadow:var(--sh2)}
+.kc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--r) var(--r) 0 0}
+.kc:nth-child(1)::before{background:linear-gradient(90deg,var(--p),var(--p2))}.kc:nth-child(2)::before{background:linear-gradient(90deg,#16a34a,#4ade80)}.kc:nth-child(3)::before{background:linear-gradient(90deg,#d97706,#fbbf24)}.kc:nth-child(4)::before{background:linear-gradient(90deg,#0d9488,#2dd4bf)}
+.kh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.ki{width:36px;height:36px;border-radius:var(--r2);display:flex;align-items:center;justify-content:center;font-size:17px}
+.kip{background:var(--ph);}.kig{background:var(--gd);}.kia{background:var(--ad);}.kit{background:var(--td);}
+.kb{font-size:10px;font-weight:700;padding:3px 9px;border-radius:6px;font-family:var(--m)}
+.kbu{background:var(--gd);color:var(--gn)}.kbn{background:var(--ph);color:var(--p2)}
+.kl{font-size:11px;color:var(--t2);margin-bottom:5px;font-weight:500}
+.kv{font-size:28px;font-weight:800;letter-spacing:-.05em;line-height:1;color:var(--tx)}
+.kh2{font-size:11px;color:var(--t3);margin-top:5px;font-family:var(--m)}
+.sk{height:30px;display:flex;align-items:flex-end;gap:2px;margin-top:12px}
+.skb{flex:1;border-radius:2px;height:4px;transition:height .8s cubic-bezier(.4,0,.2,1)}
+
+/* panels */
+.r2{display:grid;grid-template-columns:1.65fr 1fr;gap:14px}
+.r3{display:grid;grid-template-columns:1fr 1.4fr .85fr;gap:14px}
+.r4{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pn{background:var(--bg1);border:1px solid var(--b1);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:15px 20px;border-bottom:1px solid var(--b1)}
+.pt{font-size:13px;font-weight:700;letter-spacing:-.01em;color:var(--tx)}
+.ps{font-size:11px;color:var(--t3)}
+.pb2{font-size:11px;color:var(--t2);padding:5px 11px;border-radius:7px;border:1px solid var(--b1);cursor:pointer;background:transparent;transition:all .15s;font-family:var(--f);font-weight:500}
+.pb2:hover{border-color:var(--b2);color:var(--p);background:var(--pd)}
+.bd{padding:18px 20px}
+.cw{position:relative;height:195px}
+
+/* donut */
+.dl{display:flex;align-items:center;gap:20px}
+.da{position:relative;width:150px;height:150px;flex-shrink:0}
+.dc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.dcv{font-size:24px;font-weight:800;letter-spacing:-.05em;color:var(--tx)}
+.dcl{font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:.08em;margin-top:1px}
+.lg{flex:1;display:flex;flex-direction:column;gap:10px}
+.lr{display:flex;align-items:center;gap:9px;font-size:12px}
+.ld{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.ll{color:var(--t2);flex:1;font-weight:500}
+.lp{font-family:var(--m);font-size:12px;font-weight:600;color:var(--tx)}
+
+/* stat bars */
+.hl{display:flex;flex-direction:column;gap:12px}
+.hr{display:flex;align-items:center;gap:10px}
+.hn{font-size:12px;color:var(--t2);flex:1;font-weight:500}
+.ht{width:72px;height:5px;background:var(--b1);border-radius:3px;overflow:hidden;flex-shrink:0}
+.hf{height:100%;border-radius:3px;width:0;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+.hv{font-size:11px;font-family:var(--m);font-weight:600;width:42px;text-align:right;flex-shrink:0;color:var(--tx)}
+
+/* intent bars */
+.il{display:flex;flex-direction:column;gap:11px}
+.ir{display:flex;align-items:center;gap:10px}
+.in2{font-size:12px;color:var(--t2);width:110px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.itr{flex:1;height:6px;background:var(--b1);border-radius:4px;overflow:hidden}
+.if2{height:100%;border-radius:4px;width:0;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+.ic2{font-size:11px;color:var(--t3);font-family:var(--m);width:36px;text-align:right;flex-shrink:0;font-weight:600}
+
+/* conversations */
+.cl{display:flex;flex-direction:column}
+.cr{display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid var(--b1);cursor:pointer;transition:background .15s}
+.cr:last-child{border-bottom:none}
+.cr:hover{background:var(--bg0)}
+.cav{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.a1{background:var(--ph);color:var(--p)}.a2{background:var(--gd);color:var(--gn)}.a3{background:var(--ad);color:var(--am)}.a4{background:var(--td);color:var(--tl)}.a5{background:var(--rdd);color:var(--rd)}
+.ci{flex:1;min-width:0}
+.cn{font-size:12px;font-weight:600;color:var(--tx)}
+.cp{font-size:11px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.cm{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.ct{font-size:10px;color:var(--t3);font-family:var(--m)}
+.sp2{font-size:9px;font-weight:700;padding:2px 8px;border-radius:99px;letter-spacing:.04em}
+.sa{background:var(--gd);color:var(--gn)}.sm{background:var(--ph);color:var(--p2)}.sd{background:var(--b1);color:var(--t3)}
+
+/* activity */
+.al2{display:flex;flex-direction:column}
+.ar{display:flex;align-items:flex-start;gap:12px;padding:11px 18px;border-bottom:1px solid var(--b1);font-size:12px}
+.ar:last-child{border-bottom:none}
+.ai{width:30px;height:30px;border-radius:var(--r2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:1px}
+.am2{color:var(--tx);line-height:1.5}
+.am2 b{color:var(--p);font-weight:600}
+.at2{font-size:10px;color:var(--t3);font-family:var(--m);margin-top:2px}
+
+/* model rows */
+.ml{display:flex;flex-direction:column;gap:7px}
+.mr{display:flex;align-items:center;gap:10px;padding:10px 13px;border-radius:var(--r2);border:1px solid var(--b1);transition:all .15s;cursor:pointer}
+.mr:hover{border-color:var(--b2);background:var(--bg0)}
+.mr.tp{border-color:var(--b3);background:var(--ph)}
+.mdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.mn2{font-size:12px;font-weight:600;flex:1;font-family:var(--m);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--tx)}
+.mc{font-size:10px;color:var(--t3)}
+.mb2{font-size:10px;padding:2px 9px;border-radius:5px;font-weight:700}
+.mbt{background:var(--gd);color:var(--gn)}.mbi{background:var(--b1);color:var(--t3)}
+
+/* tags */
+.tc{display:flex;flex-wrap:wrap;gap:6px}
+.tg2{font-size:11px;padding:4px 11px;border-radius:6px;border:1px solid var(--b1);color:var(--t2);cursor:pointer;font-family:var(--m);transition:all .15s;background:var(--bg0);font-weight:500}
+.tg2:hover{border-color:var(--b3);color:var(--p);background:var(--ph)}
+
+/* sync banner */
+.syn{display:flex;align-items:center;gap:10px;padding:11px 16px;background:var(--ph);border:1px solid var(--b3);border-radius:var(--r2);font-size:12px;color:var(--p)}
+.syn code{font-family:var(--m);background:rgba(91,76,245,.1);padding:1px 6px;border-radius:4px;font-size:11px}
+.syn .rbtn{margin-left:auto;padding:5px 13px;border:1px solid var(--b3);border-radius:7px;cursor:pointer;background:transparent;color:var(--p);font-family:var(--f);font-size:11px;font-weight:600;transition:all .15s}
+.syn .rbtn:hover{background:var(--p);color:#fff}
+
+/* empty state */
+.emp{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:38px 20px;gap:9px;color:var(--t3);text-align:center}
+.emp-i{font-size:32px;margin-bottom:4px}
+.emp-t{font-size:13px;font-weight:700;color:var(--t2)}
+.emp-s{font-size:11px;line-height:1.65;max-width:260px;color:var(--t3)}
+
+/* history table */
+.ht2{width:100%;border-collapse:collapse}
+.ht2 th{font-size:10px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:.06em;padding:10px 16px;text-align:left;border-bottom:1px solid var(--b1);font-weight:600}
+.ht2 td{padding:11px 16px;font-size:12px;border-bottom:1px solid var(--b1);vertical-align:middle;color:var(--tx)}
+.ht2 tr:last-child td{border-bottom:none}
+.ht2 tr:hover td{background:var(--bg0)}
+.vbtn{font-size:10px;padding:4px 11px;border-radius:6px;border:1px solid var(--b1);background:transparent;color:var(--t2);cursor:pointer;font-family:var(--f);font-weight:600;transition:all .15s}
+.vbtn:hover{border-color:var(--p);color:var(--p);background:var(--ph)}
+
+/* analytics */
+.ag{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.as2{background:var(--bg1);border:1px solid var(--b1);border-radius:var(--r);padding:20px 22px;box-shadow:var(--sh)}
+.asl{font-size:11px;color:var(--t2);margin-bottom:7px;font-weight:500}
+.asv{font-size:28px;font-weight:800;letter-spacing:-.05em;color:var(--tx)}
+.ash{font-size:10px;color:var(--t3);font-family:var(--m);margin-top:5px}
+
+/* alert cards */
+.ac2{background:var(--bg1);border:1px solid var(--b1);border-radius:var(--r);padding:17px 22px;display:flex;gap:14px;align-items:flex-start;box-shadow:var(--sh)}
+.ac2.warn{border-color:var(--adb);background:var(--ad)}
+.ac2.info{border-color:var(--b3);background:var(--ph)}
+.ac2.ok{border-color:var(--gdb);background:var(--gd)}
+.ac2.err{border-color:#fca5a5;background:var(--rdd)}
+.aico{font-size:20px;flex-shrink:0;margin-top:2px}
+.ati{font-size:13px;font-weight:700;margin-bottom:5px;color:var(--tx)}
+.ade{font-size:12px;color:var(--t2);line-height:1.65}
+.atm{font-size:10px;color:var(--t3);font-family:var(--m);margin-top:6px}
+
+.dv{height:1px;background:var(--b1);margin:12px 0}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- SIDEBAR -->
+<nav class="sb">
+  <div class="logo">
+    <div class="logo-ic">🤖</div>
+    <div>
+      <div class="logo-nm">Ollama Hub</div>
+      <div class="logo-tg">BERNATH · PRIVATE AI</div>
+    </div>
+  </div>
+  <div class="ng">
+    <div class="nl">Main</div>
+    <div class="ni on" onclick="goto('dashboard')"><span class="nic">⊞</span>Dashboard</div>
+    <div class="ni" onclick="goto('history')"><span class="nic">💬</span>Chat History</div>
+    <div class="ni" onclick="goto('analytics')"><span class="nic">📊</span>Analytics</div>
+    <div class="ni" onclick="goto('alerts')"><span class="nic">🔔</span>Alerts<span class="nbd" id="abadge">0</span></div>
+  </div>
+  <div class="ng">
+    <div class="nl">Tools</div>
+    <div class="ni" onclick="goto('models')"><span class="nic">🧠</span>Model Manager</div>
+    <div class="ni" onclick="goto('settings')"><span class="nic">⚙️</span>Settings</div>
+  </div>
+  <div class="sf">
+    <div class="uc">
+      <div class="uav">B</div>
+      <div><div class="un">Bernath</div><div class="um">localhost:11434</div></div>
+    </div>
+    <div class="sr"><div class="dot on"></div><span id="sbst">Reading data…</span></div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="mn">
+  <header class="tb">
+    <div>
+      <div class="tg" id="greet">Good morning, Bernath 👋</div>
+      <div class="ts" id="dstr"></div>
+    </div>
+    <div class="tr">
+      <div class="chip ac"><div class="chdot dot on"></div>Live sync ON</div>
+      <div class="chip" id="synced">⟳ synced just now</div>
+      <button class="obtn" onclick="openChat()">↗ Open Chat</button>
+    </div>
+  </header>
+
+  <!-- ══ DASHBOARD PAGE ══ -->
+  <div class="pg on" id="pg-dashboard">
+
+    <!-- KPI row -->
+    <div class="kg">
+      <div class="kc">
+        <div class="kh"><div class="ki kip">💬</div><div class="kb kbn" id="k1b">0 total</div></div>
+        <div class="kl">Total Sessions</div>
+        <div class="kv" id="k1">0</div>
+        <div class="kh2" id="k1h">No data — open Ollama Chat!</div>
+        <div class="sk" id="sp1"></div>
+      </div>
+      <div class="kc">
+        <div class="kh"><div class="ki kig">✉️</div><div class="kb kbu" id="k2b">0 msgs</div></div>
+        <div class="kl">Total Messages</div>
+        <div class="kv" id="k2">0</div>
+        <div class="kh2" id="k2h">—</div>
+        <div class="sk" id="sp2"></div>
+      </div>
+      <div class="kc">
+        <div class="kh"><div class="ki kia">🔢</div><div class="kb kbn">Est. Tokens</div></div>
+        <div class="kl">Token Usage</div>
+        <div class="kv" id="k3">0</div>
+        <div class="kh2" id="k3h">—</div>
+        <div class="sk" id="sp3"></div>
+      </div>
+      <div class="kc">
+        <div class="kh"><div class="ki kit">🧠</div><div class="kb kbu" id="k4b">none yet</div></div>
+        <div class="kl">Unique Models</div>
+        <div class="kv" id="k4">0</div>
+        <div class="kh2" id="k4h">chat first to see models</div>
+        <div class="sk" id="sp4"></div>
+      </div>
+    </div>
+
+    <!-- Row 2 -->
+    <div class="r2">
+      <!-- Session Timeline -->
+      <div class="pn">
+        <div class="ph">
+          <div>
+            <div class="pt">Session Timeline</div>
+            <div class="ps" id="csub">sessions by date</div>
+          </div>
+          <button class="pb2" onclick="toggleChart()">Toggle tokens view</button>
+        </div>
+        <div class="bd"><div class="cw"><canvas id="lineChart"></canvas></div></div>
+      </div>
+
+      <!-- Message Split -->
+      <div class="pn">
+        <div class="ph"><div class="pt">Message Split</div></div>
+        <div class="bd">
+          <div class="dl">
+            <div class="da">
+              <canvas id="donutChart"></canvas>
+              <div class="dc"><div class="dcv" id="dcv">0</div><div class="dcl">MESSAGES</div></div>
+            </div>
+            <div class="lg">
+              <div class="lr"><div class="ld" style="background:#5b4cf5"></div><span class="ll">You (user)</span><span class="lp" id="l1">0</span></div>
+              <div class="lr"><div class="ld" style="background:#16a34a"></div><span class="ll">AI replies</span><span class="lp" id="l2">0</span></div>
+              <div class="lr"><div class="ld" style="background:#d97706"></div><span class="ll">Multi-turn</span><span class="lp" id="l3">0</span></div>
+              <div class="lr"><div class="ld" style="background:#0d9488"></div><span class="ll">Long (10+ msg)</span><span class="lp" id="l4">0</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 3 -->
+    <div class="r3">
+      <!-- Session stats -->
+      <div class="pn">
+        <div class="ph"><div class="pt">Session Stats</div></div>
+        <div class="bd">
+          <div class="hl">
+            <div class="hr"><span class="hn">Sessions w/ content</span><div class="ht"><div class="hf" style="background:var(--gn)" id="hf1"></div></div><span class="hv" style="color:var(--gn)" id="hv1">—</span></div>
+            <div class="hr"><span class="hn">Avg msgs / session</span><div class="ht"><div class="hf" style="background:var(--p2)" id="hf2"></div></div><span class="hv" style="color:var(--p2)" id="hv2">—</span></div>
+            <div class="hr"><span class="hn">User msg ratio</span><div class="ht"><div class="hf" style="background:var(--am)" id="hf3"></div></div><span class="hv" style="color:var(--am)" id="hv3">—</span></div>
+            <div class="hr"><span class="hn">AI reply ratio</span><div class="ht"><div class="hf" style="background:var(--tl)" id="hf4"></div></div><span class="hv" style="color:var(--tl)" id="hv4">—</span></div>
+            <div class="hr"><span class="hn">Model diversity</span><div class="ht"><div class="hf" style="background:var(--p)" id="hf5"></div></div><span class="hv" style="color:var(--p)" id="hv5">—</span></div>
+          </div>
+          <div class="dv"></div>
+          <div style="font-size:10px;color:var(--t3);font-family:var(--m)">localStorage key: oc_sessions</div>
+        </div>
+      </div>
+
+      <!-- Recent chats -->
+      <div class="pn" style="overflow:hidden">
+        <div class="ph">
+          <div class="pt">Recent Chats</div>
+          <div style="display:flex;align-items:center;gap:6px"><div class="dot on"></div><span style="font-size:11px;color:var(--gn);font-family:var(--m);font-weight:600">LIVE</span></div>
+        </div>
+        <div class="cl" id="rclist"></div>
+      </div>
+
+      <!-- Top models + tags -->
+      <div class="pn">
+        <div class="ph"><div class="pt">Top Models</div></div>
+        <div class="bd" style="display:flex;flex-direction:column;gap:14px">
+          <div class="ml" id="topmodels"></div>
+          <div class="dv"></div>
+          <div style="font-size:10px;color:var(--t3);margin-bottom:7px;font-family:var(--m);font-weight:700;letter-spacing:.08em">TITLE KEYWORDS</div>
+          <div class="tc" id="tagcloud"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 4 -->
+    <div class="r4">
+      <div class="pn">
+        <div class="ph"><div class="pt">Activity Feed</div></div>
+        <div class="al2" id="actfeed"></div>
+      </div>
+      <div class="pn">
+        <div class="ph"><div class="pt">Your Numbers</div></div>
+        <div class="bd">
+          <div class="il">
+            <div class="ir"><span class="in2">Total sessions</span><div class="itr"><div class="if2" style="background:var(--p)" id="ib1"></div></div><span class="ic2" id="iv1">0</span></div>
+            <div class="ir"><span class="in2">User messages</span><div class="itr"><div class="if2" style="background:var(--gn)" id="ib2"></div></div><span class="ic2" id="iv2">0</span></div>
+            <div class="ir"><span class="in2">AI responses</span><div class="itr"><div class="if2" style="background:var(--am)" id="ib3"></div></div><span class="ic2" id="iv3">0</span></div>
+            <div class="ir"><span class="in2">Avg / session</span><div class="itr"><div class="if2" style="background:var(--tl)" id="ib4"></div></div><span class="ic2" id="iv4">0</span></div>
+            <div class="ir"><span class="in2">Longest session</span><div class="itr"><div class="if2" style="background:var(--p2)" id="ib5"></div></div><span class="ic2" id="iv5">0</span></div>
+            <div class="ir"><span class="in2">Models seen</span><div class="itr"><div class="if2" style="background:var(--rd)" id="ib6"></div></div><span class="ic2" id="iv6">0</span></div>
+          </div>
+          <div class="dv"></div>
+          <div style="font-size:11px;color:var(--t3);display:flex;align-items:center;gap:6px">🔒 All data is local — never leaves your browser.</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /dashboard -->
+
+  <!-- ══ CHAT HISTORY PAGE ══ -->
+  <div class="pg" id="pg-history">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div><div style="font-size:19px;font-weight:800;letter-spacing:-.04em;color:var(--tx)">Chat History</div><div style="font-size:12px;color:var(--t2);margin-top:3px">All conversations stored in your browser</div></div>
+      <button class="pb2" onclick="refreshAll();renderHistoryPage()">⟳ Refresh</button>
+    </div>
+    <div class="pn" style="overflow:hidden">
+      <table class="ht2"><thead><tr><th>#</th><th>Title</th><th>Model</th><th>Messages</th><th>Est. Tokens</th><th>Created</th><th></th></tr></thead>
+      <tbody id="htbody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- ══ ANALYTICS PAGE ══ -->
+  <div class="pg" id="pg-analytics">
+    <div><div style="font-size:19px;font-weight:800;letter-spacing:-.04em;color:var(--tx)">Analytics</div><div style="font-size:12px;color:var(--t2);margin-top:3px">Deep insights from your chat data</div></div>
+    <div class="ag">
+      <div class="as2"><div class="asl">Characters typed by you</div><div class="asv" id="an1">0</div><div class="ash" id="an1h">—</div></div>
+      <div class="as2"><div class="asl">Characters from AI</div><div class="asv" id="an2">0</div><div class="ash" id="an2h">—</div></div>
+      <div class="as2"><div class="asl">Longest session</div><div class="asv" id="an3">0 msgs</div><div class="ash" id="an3h">—</div></div>
+      <div class="as2"><div class="asl">Average session length</div><div class="asv" id="an4">0</div><div class="ash">messages per session</div></div>
+      <div class="as2"><div class="asl">Most active day</div><div class="asv" id="an5" style="font-size:18px;margin-top:4px">—</div><div class="ash" id="an5h">—</div></div>
+      <div class="as2"><div class="asl">Most used model</div><div class="asv" id="an6" style="font-size:15px;margin-top:6px;word-break:break-all">—</div><div class="ash" id="an6h">—</div></div>
+    </div>
+    <div class="r2">
+      <div class="pn"><div class="ph"><div class="pt">Tokens per Session (recent 10)</div></div><div class="bd"><div class="cw"><canvas id="barChart"></canvas></div></div></div>
+      <div class="pn"><div class="ph"><div class="pt">All Models Used</div></div><div class="bd"><div class="ml" id="modelfull"></div></div></div>
+    </div>
+  </div>
+
+  <!-- ══ ALERTS PAGE ══ -->
+  <div class="pg" id="pg-alerts">
+    <div><div style="font-size:19px;font-weight:800;letter-spacing:-.04em;color:var(--tx)">Alerts & Notices</div><div style="font-size:12px;color:var(--t2);margin-top:3px">System status and smart suggestions</div></div>
+    <div style="display:flex;flex-direction:column;gap:10px" id="alertslist"></div>
+  </div>
+
+  <!-- ══ MODELS PAGE ══ -->
+  <div class="pg" id="pg-models">
+    <div><div style="font-size:19px;font-weight:800;letter-spacing:-.04em;color:var(--tx)">Model Manager</div><div style="font-size:12px;color:var(--t2);margin-top:3px">Models detected from your chat history</div></div>
+    <div class="pn"><div class="ph"><div class="pt">Detected Models</div><span class="ps">from oc_sessions</span></div><div class="bd"><div class="ml" id="modelfull2"></div></div></div>
+    <div class="pn"><div class="ph"><div class="pt">Terminal Commands</div></div>
+      <div class="bd" style="display:flex;flex-direction:column;gap:9px">
+        <div style="font-size:12px;color:var(--t2);margin-bottom:4px;font-weight:500">Run these in your terminal:</div>
+        <div style="font-family:var(--m);font-size:12px;background:var(--bg0);padding:11px 15px;border-radius:var(--r2);color:var(--gn);border:1px solid var(--b1)">ollama list              # show installed models</div>
+        <div style="font-family:var(--m);font-size:12px;background:var(--bg0);padding:11px 15px;border-radius:var(--r2);color:var(--p);border:1px solid var(--b1)">ollama pull qwen2.5:7b   # fast + accurate</div>
+        <div style="font-family:var(--m);font-size:12px;background:var(--bg0);padding:11px 15px;border-radius:var(--r2);color:var(--am);border:1px solid var(--b1)">ollama pull llama3.2:3b  # fastest, lightweight</div>
+        <div style="font-family:var(--m);font-size:12px;background:var(--bg0);padding:11px 15px;border-radius:var(--r2);color:var(--tl);border:1px solid var(--b1)">ollama ps                # show running models</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SETTINGS PAGE ══ -->
+  <div class="pg" id="pg-settings">
+    <div><div style="font-size:19px;font-weight:800;letter-spacing:-.04em;color:var(--tx)">Settings</div><div style="font-size:12px;color:var(--t2);margin-top:3px">Dashboard configuration</div></div>
+    <div class="pn"><div class="ph"><div class="pt">Data Source</div></div>
+      <div class="bd" style="display:flex;flex-direction:column;gap:16px">
+        <div>
+          <div style="font-size:12px;color:var(--t2);margin-bottom:8px;font-weight:500">Current localStorage key: <code id="curkey" style="font-family:var(--m);background:var(--ph);padding:2px 7px;border-radius:5px;font-size:11px;color:var(--p)">oc_sessions</code></div>
+          <div style="display:flex;gap:8px">
+            <input id="lskey" value="oc_sessions" style="flex:1;padding:8px 13px;background:var(--bg0);border:1px solid var(--b1);border-radius:var(--r2);color:var(--tx);font-family:var(--m);font-size:13px;outline:none">
+            <button onclick="applyKey()" style="padding:8px 18px;background:var(--p);color:#fff;border:none;border-radius:var(--r2);font-family:var(--f);font-size:12px;font-weight:700;cursor:pointer">Apply</button>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;margin-bottom:6px;color:var(--tx)">Chat path (for Open Chat button)</div>
+          <input id="chatpath" value="ollama_chat.html" style="width:100%;padding:8px 13px;background:var(--bg0);border:1px solid var(--b1);border-radius:var(--r2);color:var(--tx);font-family:var(--m);font-size:13px;outline:none">
+        </div>
+        <div class="dv"></div>
+        <div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:9px;color:var(--tx)">Raw localStorage Preview</div>
+          <div id="rawprev" style="font-family:var(--m);font-size:11px;color:var(--t2);background:var(--bg0);border:1px solid var(--b1);border-radius:var(--r2);padding:13px;max-height:220px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;line-height:1.5"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+// ── CONFIG ──
+let LS_KEY = 'oc_sessions';
+let chartMode = 'sessions';
+let lineC, donutC, barC;
+
+// ── INIT ──
+;(function(){
+  const h = new Date().getHours();
+  document.getElementById('greet').textContent = (h<12?'Good morning':h<17?'Good afternoon':'Good evening')+', Bernath 👋';
+  document.getElementById('dstr').textContent = new Date().toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'})+' · Ollama Dashboard';
+  // small delay to ensure Chart.js is ready and layout is painted
+  setTimeout(()=>{ refreshAll(); }, 100);
+  setInterval(refreshAll, 5000);
+  window.addEventListener('storage', e => { if(e.key===LS_KEY){ refreshAll(); toast('📡 New chat data!'); }});
+})();
+
+function openChat(){ window.open(document.getElementById('chatpath').value||'ollama_chat.html','_blank'); }
+
+// ── NAVIGATION ──
+function goto(page){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
+  const pg = document.getElementById('pg-'+page);
+  if(pg) pg.classList.add('on');
+  document.querySelectorAll('.ni').forEach(n=>{
+    const txt = n.textContent.trim().toLowerCase();
+    if(txt.startsWith(page.replace('-',' ').toLowerCase().split(' ')[0])) n.classList.add('on');
+  });
+  if(page==='history') renderHistoryPage();
+  if(page==='analytics') renderAnalyticsPage();
+  if(page==='alerts') renderAlertsPage();
+  if(page==='models') renderModelsPage();
+  if(page==='settings') renderSettingsPage();
+}
+
+// ── DATA ──
+function getSessions(){
+  try{ const d=JSON.parse(localStorage.getItem(LS_KEY)||'[]'); return Array.isArray(d)?d:[]; }
+  catch(e){ return []; }
+}
+
+function calcStats(sessions){
+  let totalMsgs=0, userMsgs=0, aiMsgs=0, userChars=0, aiChars=0, longest=0, longestTitle='';
+  const modelCount={}, dateBuckets={};
+  const titles=[];
+  sessions.forEach(s=>{
+    const msgs=s.messages||[];
+    if(msgs.length>longest){longest=msgs.length; longestTitle=s.title||'Untitled';}
+    totalMsgs+=msgs.length;
+    msgs.forEach(m=>{
+      const c=(m.content||'').length;
+      if(m.role==='user'){userMsgs++;userChars+=c;}
+      else if(m.role==='assistant'){aiMsgs++;aiChars+=c;}
+      if(m.model&&m.model.trim()) modelCount[m.model.trim()]=(modelCount[m.model.trim()]||0)+1;
+    });
+    if(s.title&&s.title!=='New conversation') titles.push(s.title);
+    const d=s.created?new Date(s.created).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'Unknown';
+    dateBuckets[d]=(dateBuckets[d]||0)+1;
+  });
+  return {
+    totalSessions:sessions.length, totalMsgs, userMsgs, aiMsgs,
+    userChars, aiChars, longest, longestTitle, modelCount, dateBuckets, titles,
+    estTokens:Math.round((userChars+aiChars)/4),
+    avgMsgs:sessions.length?+(totalMsgs/sessions.length).toFixed(1):0,
+    uniqueModels:Object.keys(modelCount).length,
+    withContent:sessions.filter(s=>(s.messages||[]).length>0).length,
+    multiTurn:sessions.filter(s=>(s.messages||[]).length>2).length,
+    longSess:sessions.filter(s=>(s.messages||[]).length>=10).length
+  };
+}
+
+// ── MAIN REFRESH ──
+function refreshAll(){
+  const sessions=getSessions(), st=calcStats(sessions);
+  document.getElementById('sbst').textContent = st.totalSessions+' session'+(st.totalSessions!==1?'s':'')+' loaded';
+  document.getElementById('synced').textContent = '⟳ synced '+tago(Date.now());
+  document.getElementById('abadge').textContent = buildAlertCount(st);
+  fillDashboard(sessions, st);
+}
+
+function buildAlertCount(st){
+  let c=1;
+  if(st.totalSessions===0) c++;
+  if(st.uniqueModels>2) c++;
+  if(st.longest>20) c++;
+  return c;
+}
+
+// ── FILL DASHBOARD ──
+function fillDashboard(sessions, st){
+  // KPIs
+  anim('k1', st.totalSessions);
+  anim('k2', st.totalMsgs);
+  anim('k3', st.estTokens);
+  anim('k4', st.uniqueModels);
+  $('k1b').textContent = st.totalSessions ? st.totalSessions+' total' : '0 total';
+  $('k2b').textContent = st.userMsgs+' you · '+st.aiMsgs+' AI';
+  $('k4b').textContent = st.uniqueModels ? st.uniqueModels+' found' : 'none yet';
+  $('k1h').textContent = st.totalSessions ? st.totalSessions+' chat session'+(st.totalSessions!==1?'s':'') : 'No data — open Ollama Chat!';
+  $('k2h').textContent = st.userMsgs ? st.userMsgs+' from you · '+st.aiMsgs+' AI replies' : 'Start chatting to see stats';
+  $('k3h').textContent = st.estTokens ? '~'+Math.round((st.userChars+st.aiChars)/1000)+'k total chars processed' : 'No tokens yet';
+  $('k4h').textContent = Object.keys(st.modelCount).slice(0,2).join(', ')||'chat first to see models';
+
+  // Sparklines
+  ['sp1','sp2','sp3','sp4'].forEach(id=>$(''+id).innerHTML='');
+  const bvRaw = Object.values(st.dateBuckets);
+  const bv = bvRaw.length>=2 ? bvRaw.slice(-8) : bvRaw.length===1 ? [0,0,0,0,0,0,0,bvRaw[0]] : [0,0,0,0,0,0,0,1];
+  makeSpark('sp1', bv, 'var(--p)');
+  makeSpark('sp2', bv.map(v=>v*(Math.max(1,Math.round(st.avgMsgs)))), 'var(--gn)');
+  makeSpark('sp3', bv.map(v=>v*50), 'var(--am)');
+  makeSpark('sp4', bv.map((_,i)=>i===bv.length-1?Math.max(1,st.uniqueModels):st.uniqueModels), 'var(--tl)');
+
+  // Donut
+  $('dcv').textContent = st.totalMsgs || '0';
+  $('l1').textContent = st.userMsgs;
+  $('l2').textContent = st.aiMsgs;
+  $('l3').textContent = st.multiTurn;
+  $('l4').textContent = st.longSess;
+  buildDonut(Math.max(1,st.userMsgs), Math.max(1,st.aiMsgs), Math.max(0,st.multiTurn), Math.max(0,st.longSess));
+
+  // Line chart
+  const bkeys=Object.keys(st.dateBuckets), bvals=Object.values(st.dateBuckets);
+  if(chartMode==='sessions'){
+    buildLine(bkeys.length?bkeys:['Today'], bkeys.length?bvals:[0], 'Sessions');
+  } else {
+    const rs=[...sessions].reverse().slice(0,10);
+    buildLine(rs.map((s,i)=>(s.title||'S'+(i+1)).slice(0,10)), rs.map(s=>Math.round((s.messages||[]).reduce((a,m)=>a+(m.content||'').length,0)/4)), 'Tokens');
+  }
+
+  // Session stats bars
+  const hasCont = st.totalSessions ? Math.round(st.withContent/st.totalSessions*100) : 0;
+  const userR = st.totalMsgs ? Math.round(st.userMsgs/st.totalMsgs*100) : 0;
+  const aiR   = st.totalMsgs ? Math.round(st.aiMsgs/st.totalMsgs*100)   : 0;
+  const divScore = Math.min(100, st.uniqueModels*20);
+  const avgScore = Math.min(100, st.avgMsgs*10);
+  setHbar('hf1','hv1', hasCont, hasCont ? hasCont+'%' : '0%');
+  setHbar('hf2','hv2', avgScore, st.avgMsgs ? st.avgMsgs+'' : '0');
+  setHbar('hf3','hv3', userR,   userR ? userR+'%' : '0%');
+  setHbar('hf4','hv4', aiR,     aiR ? aiR+'%' : '0%');
+  setHbar('hf5','hv5', divScore, st.uniqueModels ? st.uniqueModels+' model'+(st.uniqueModels!==1?'s':'') : '0');
+
+  // Your Numbers bars
+  const mx = Math.max(st.totalSessions, st.userMsgs, st.aiMsgs, 1);
+  setIbar('ib1','iv1', st.totalSessions, mx, st.totalSessions+'');
+  setIbar('ib2','iv2', st.userMsgs,      mx, st.userMsgs+'');
+  setIbar('ib3','iv3', st.aiMsgs,        mx, st.aiMsgs+'');
+  setIbar('ib4','iv4', st.avgMsgs*10,    mx, st.avgMsgs+'');
+  setIbar('ib5','iv5', st.longest,       mx, st.longest+'');
+  setIbar('ib6','iv6', st.uniqueModels,  mx, st.uniqueModels+'');
+
+  // Top models
+  const mlist = Object.entries(st.modelCount).sort((a,b)=>b[1]-a[1]);
+  const dotC=['var(--p)','var(--gn)','var(--am)','var(--tl)','var(--rd)'];
+  $('topmodels').innerHTML = mlist.length
+    ? mlist.slice(0,4).map((e,i)=>`<div class="mr ${i===0?'tp':''}"><div class="mdot" style="background:${dotC[i%5]}"></div><div><div class="mn2">${esc(e[0])}</div><div class="mc">${e[1]} use${e[1]!==1?'s':''}</div></div><span class="mb2 ${i===0?'mbt':'mbi'}">${i===0?'#1':'—'}</span></div>`).join('')
+    : '<div class="emp"><div class="emp-i">🧠</div><div class="emp-t">No models yet</div><div class="emp-s">Chat in Ollama Chat to see which models you use here.</div></div>';
+
+  // Recent chats
+  const avCls=['a1','a2','a3','a4','a5'];
+  const rlist = $('rclist');
+  if(sessions.length){
+    const recent=[...sessions].slice(0,5);
+    rlist.innerHTML = recent.map((s,i)=>{
+      const msgs=s.messages||[];
+      const lastU=msgs.filter(m=>m.role==='user').slice(-1)[0];
+      const prev=lastU?(lastU.content||'').replace(/\n/g,' ').slice(0,52)+'…':'(empty session)';
+      const sc=msgs.length===0?'sd':msgs.length<=2?'sm':'sa';
+      const sl=msgs.length===0?'EMPTY':msgs.length<=2?'SHORT':'ACTIVE';
+      const initials=(s.title||'?')[0].toUpperCase();
+      return `<div class="cr" onclick="goto('history')">
+        <div class="cav ${avCls[i%5]}">${initials}</div>
+        <div class="ci"><div class="cn">${esc((s.title||'Untitled').slice(0,32))}</div><div class="cp">${esc(prev)}</div></div>
+        <div class="cm"><div class="ct">${s.created?tago(s.created):'—'}</div><span class="sp2 ${sc}">${sl}</span></div>
+      </div>`;
+    }).join('');
+  } else {
+    rlist.innerHTML=`<div class="emp"><div class="emp-i">💬</div><div class="emp-t">No chats yet</div><div class="emp-s">Open Ollama Chat in this same browser, connect a model and send a message. It appears here instantly.</div></div>`;
+  }
+
+  // Activity feed
+  const af=$('actfeed');
+  const acts=[];
+  if(st.uniqueModels>0) acts.push({ico:'🧠',bg:'var(--td)',msg:`<b>${st.uniqueModels} model${st.uniqueModels!==1?'s':''}</b> detected in your history`,t:'session data'});
+  [...sessions].slice(0,4).forEach(s=>{
+    const mc=(s.messages||[]).length;
+    acts.push({ico:'💬',bg:'var(--pd)',msg:`Session <b>${esc((s.title||'Untitled').slice(0,28))}</b> — ${mc} message${mc!==1?'s':''}`,t:s.created?tago(s.created):''});
+  });
+  if(!acts.length) acts.push({ico:'📡',bg:'var(--gd)',msg:'<b>Dashboard ready.</b> No chats found yet — open Ollama Chat and start chatting!',t:'now'});
+  af.innerHTML=acts.slice(0,6).map(a=>`<div class="ar"><div class="ai" style="background:${a.bg}">${a.ico}</div><div><div class="am2">${a.msg}</div><div class="at2">${a.t}</div></div></div>`).join('');
+
+  // Keywords from titles
+  const stopW=new Set(['the','and','this','that','with','from','have','will','what','your','just','about','been','for','are','but','not','you','all','can','new','conversation']);
+  const wds=st.titles.join(' ').toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(w=>w.length>3&&!stopW.has(w));
+  const freq={};wds.forEach(w=>freq[w]=(freq[w]||0)+1);
+  const topW=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,12).map(e=>e[0]);
+  $('tagcloud').innerHTML=(topW.length?topW:['chat','ai','help','question','code','model','ollama']).map(w=>`<span class="tg2">${w}</span>`).join('');
+}
+
+// ── HISTORY PAGE ──
+function renderHistoryPage(){
+  const sessions=getSessions();
+  const tb=$('htbody');
+  if(!sessions.length){
+    tb.innerHTML=`<tr><td colspan="7"><div class="emp"><div class="emp-i">📂</div><div class="emp-t">No sessions found</div><div class="emp-s">Open Ollama Chat in the same browser window, connect to Ollama and start a conversation.</div></div></td></tr>`;
+    return;
+  }
+  tb.innerHTML=[...sessions].map((s,i)=>{
+    const msgs=s.messages||[];
+    const aiM=msgs.find(m=>m.role==='assistant'&&m.model);
+    const model=aiM?.model||'—';
+    const tkn=Math.round(msgs.reduce((a,m)=>a+(m.content||'').length,0)/4);
+    const d=s.created?new Date(s.created).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+    return `<tr><td style="color:var(--t3);font-family:var(--m)">${i+1}</td><td style="font-weight:600">${esc(s.title||'Untitled')}</td><td style="font-family:var(--m);font-size:11px;color:var(--t2)">${esc(model)}</td><td style="font-family:var(--m);color:var(--p);font-weight:600">${msgs.length}</td><td style="font-family:var(--m);color:var(--p)">~${tkn.toLocaleString()}</td><td style="font-family:var(--m);font-size:11px;color:var(--t3)">${d}</td><td><button class="vbtn" onclick="viewSession('${esc(s.id)}')">View</button></td></tr>`;
+  }).join('');
+}
+
+function viewSession(id){
+  const s=getSessions().find(x=>x.id===id); if(!s) return;
+  const msgs=s.messages||[];
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${esc(s.title||'Session')}</title><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"><style>body{font-family:'Plus Jakarta Sans',sans-serif;max-width:740px;margin:36px auto;padding:24px;background:#f8f7ff;color:#1a1535}h1{font-size:18px;font-weight:800;margin-bottom:4px}p{color:#9d99b8;font-size:12px;margin-bottom:28px}.mw{margin-bottom:18px;display:flex}.mw.user{justify-content:flex-end}.mw.assistant{justify-content:flex-start}.mb{max-width:82%;padding:12px 16px;border-radius:14px;line-height:1.7;font-size:14px;white-space:pre-wrap}.mw.user .mb{background:#ede9ff;border:1px solid #c4b8f8}.mw.assistant .mb{background:#fff;border:1px solid #e8e6f0}.mm{font-size:11px;color:#9d99b8;margin-top:5px;text-align:right}</style></head><body><h1>${esc(s.title||'Untitled')}</h1><p>${msgs.length} messages · ${s.created?new Date(s.created).toLocaleString():'—'}</p>${msgs.map(m=>`<div class="mw ${esc(m.role)}"><div><div class="mb">${esc(m.content||'').replace(/\n/g,'<br>')}</div><div class="mm">${m.role==='user'?'You':'AI'+(m.model?' · '+esc(m.model):'')} · ${m.time?new Date(m.time).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'—'}</div></div></div>`).join('')}</body></html>`);
+}
+
+// ── ANALYTICS PAGE ──
+function renderAnalyticsPage(){
+  const sessions=getSessions(), st=calcStats(sessions);
+  $('an1').textContent=st.userChars.toLocaleString(); $('an1h').textContent=Math.round(st.userChars/1000)+'k chars (~'+Math.round(st.userChars/4).toLocaleString()+' tokens)';
+  $('an2').textContent=st.aiChars.toLocaleString();  $('an2h').textContent=Math.round(st.aiChars/1000)+'k chars (~'+Math.round(st.aiChars/4).toLocaleString()+' tokens)';
+  $('an3').textContent=st.longest+' msgs';           $('an3h').textContent=st.longestTitle.slice(0,36)||'—';
+  $('an4').textContent=st.avgMsgs;
+  const de=Object.entries(st.dateBuckets).sort((a,b)=>b[1]-a[1]);
+  $('an5').textContent=de[0]?de[0][0]:'—';           $('an5h').textContent=de[0]?de[0][1]+' sessions created':'—';
+  const me=Object.entries(st.modelCount).sort((a,b)=>b[1]-a[1]);
+  $('an6').textContent=me[0]?me[0][0]:'—';           $('an6h').textContent=me[0]?me[0][1]+' uses':'no model data';
+  const rs=[...sessions].reverse().slice(0,10);
+  buildBarChart(rs.map((s,i)=>(s.title||'S'+(i+1)).slice(0,10)), rs.map(s=>Math.round((s.messages||[]).reduce((a,m)=>a+(m.content||'').length,0)/4)));
+  const mc=Object.entries(st.modelCount).sort((a,b)=>b[1]-a[1]);
+  const dotC=['var(--p)','var(--gn)','var(--am)','var(--tl)','var(--rd)'];
+  $('modelfull').innerHTML=mc.length?mc.map((e,i)=>`<div class="mr ${i===0?'tp':''}"><div class="mdot" style="background:${dotC[i%5]}"></div><div><div class="mn2">${esc(e[0])}</div><div class="mc">${e[1]} use${e[1]!==1?'s':''}</div></div><span class="mb2 ${i===0?'mbt':'mbi'}">${i===0?'TOP':'—'}</span></div>`).join('')
+    :'<div style="font-size:12px;color:var(--t3)">No model data yet.</div>';
+}
+
+// ── ALERTS PAGE ──
+function renderAlertsPage(){
+  const sessions=getSessions(), st=calcStats(sessions);
+  const al=[];
+  if(st.totalSessions===0)
+    al.push({t:'err',ico:'⚠️',title:'No chat history found',desc:'The dashboard reads from localStorage key <code style="font-family:var(--m);background:var(--ph);padding:1px 6px;border-radius:4px;color:var(--p)">oc_sessions</code>. Make sure Ollama Chat is open in the <b>same browser</b> (not incognito, not a different browser) and you have sent at least one message.',time:'action needed'});
+  else
+    al.push({t:'ok',ico:'✅',title:st.totalSessions+' session'+(st.totalSessions!==1?'s':'')+' loaded successfully',desc:'Your chat history is reading live from localStorage and auto-refreshes every 5 seconds.',time:'live'});
+  al.push({t:'info',ico:'📡',title:'Live sync is active',desc:'The dashboard listens for localStorage changes. When you send a message in Ollama Chat in another tab, the dashboard automatically detects and updates.',time:'always on'});
+  if(st.uniqueModels>2)
+    al.push({t:'warn',ico:'🧠',title:'Multiple models in use ('+st.uniqueModels+')',desc:'You have used: '+Object.keys(st.modelCount).join(', ')+'. For consistent results, consider picking one main model.',time:'suggestion'});
+  if(st.longest>20)
+    al.push({t:'warn',ico:'⚡',title:'Very long session detected ('+st.longest+' messages)',desc:'"'+st.longestTitle.slice(0,40)+'" has '+st.longest+' messages. Long sessions consume lots of context window — consider starting a new chat.',time:'suggestion'});
+  al.push({t:'ok',ico:'🔒',title:'Your data is private and local',desc:'Nothing is sent to any server. All data stays in your browser\'s localStorage only.',time:'always'});
+  $('alertslist').innerHTML=al.map(a=>`<div class="ac2 ${a.t}"><div class="aico">${a.ico}</div><div><div class="ati">${a.title}</div><div class="ade">${a.desc}</div><div class="atm">${a.time}</div></div></div>`).join('');
+}
+
+// ── MODELS PAGE ──
+function renderModelsPage(){
+  const st=calcStats(getSessions());
+  const mc=Object.entries(st.modelCount).sort((a,b)=>b[1]-a[1]);
+  const dotC=['var(--p)','var(--gn)','var(--am)','var(--tl)','var(--rd)'];
+  $('modelfull2').innerHTML=mc.length?mc.map((e,i)=>`<div class="mr ${i===0?'tp':''}"><div class="mdot" style="background:${dotC[i%5]}"></div><div><div class="mn2">${esc(e[0])}</div><div class="mc">${e[1]} use${e[1]!==1?'s':''}</div></div><span class="mb2 ${i===0?'mbt':'mbi'}">${i===0?'MOST USED':'—'}</span></div>`).join('')
+    :'<div class="emp"><div class="emp-i">🧠</div><div class="emp-t">No models detected yet</div><div class="emp-s">Start chatting in Ollama Chat to see your models here.</div></div>';
+}
+
+// ── SETTINGS PAGE ──
+function renderSettingsPage(){
+  $('curkey').textContent=LS_KEY;
+  $('lskey').value=LS_KEY;
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(!raw){$('rawprev').textContent='(empty — key not found: '+LS_KEY+')';return;}
+    const parsed=JSON.parse(raw);
+    $('rawprev').textContent=JSON.stringify(parsed,null,2).slice(0,3000)+(JSON.stringify(parsed).length>3000?'\n…(truncated)':'');
+  }catch(e){$('rawprev').textContent='Error: '+e.message;}
+}
+
+function applyKey(){
+  LS_KEY=($('lskey').value||'').trim()||'oc_sessions';
+  $('curkey').textContent=LS_KEY;
+  refreshAll();
+  toast('Key set to: '+LS_KEY);
+}
+
+// ── CHARTS ──
+const COPTS={
+  responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#e8e6f0',borderWidth:1,titleColor:'#1a1535',bodyColor:'#5f5a7d',padding:10,titleFont:{family:'JetBrains Mono',size:11},bodyFont:{family:'Plus Jakarta Sans',size:12},boxShadow:'0 4px 12px rgba(0,0,0,.08)'}},
+  scales:{x:{grid:{color:'#f0eeff'},ticks:{color:'#9d99b8',font:{family:'Plus Jakarta Sans',size:11}}},y:{grid:{color:'#f0eeff'},ticks:{color:'#9d99b8',font:{family:'JetBrains Mono',size:10}},min:0}}
+};
+
+function buildLine(labels,data,label){
+  const ctx=$('lineChart'); if(!ctx) return;
+  if(lineC) lineC.destroy();
+  lineC=new Chart(ctx.getContext('2d'),{type:'line',data:{labels,datasets:[{label:label,data,borderColor:'#5b4cf5',backgroundColor:'rgba(91,76,245,0.07)',fill:true,tension:0.45,borderWidth:2.5,pointRadius:labels.length<=1?4:3,pointBackgroundColor:'#5b4cf5',pointBorderColor:'#f8f7ff',pointBorderWidth:2.5}]},options:COPTS});
+}
+
+function buildDonut(u,a,mt,ls){
+  const ctx=$('donutChart'); if(!ctx) return;
+  if(donutC) donutC.destroy();
+  donutC=new Chart(ctx.getContext('2d'),{type:'doughnut',data:{labels:['You','AI','Multi-turn','Long'],datasets:[{data:[u,a,mt,ls],backgroundColor:['#5b4cf5','#16a34a','#d97706','#0d9488'],borderWidth:0,hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,cutout:'72%',plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#e8e6f0',borderWidth:1,titleColor:'#1a1535',bodyColor:'#5f5a7d',padding:9,callbacks:{label:c=>` ${c.label}: ${c.parsed}`}}}}});
+}
+
+function buildBarChart(labels,data){
+  const ctx=$('barChart'); if(!ctx) return;
+  if(barC) barC.destroy();
+  barC=new Chart(ctx.getContext('2d'),{type:'bar',data:{labels,datasets:[{label:'Est. Tokens',data,backgroundColor:'rgba(91,76,245,0.15)',borderColor:'#5b4cf5',borderWidth:1.5,borderRadius:5,hoverBackgroundColor:'rgba(91,76,245,0.3)'}]},options:COPTS});
+}
+
+function toggleChart(){
+  chartMode = chartMode==='sessions'?'tokens':'sessions';
+  $('csub').textContent = chartMode==='sessions'?'sessions by date':'estimated tokens per session';
+  refreshAll();
+}
+
+// ── HELPERS ──
+function $(id){return document.getElementById(id)}
+function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function tago(ts){
+  const m=Math.round((Date.now()-ts)/60000);
+  if(m<1) return 'just now';
+  if(m<60) return m+'m ago';
+  const h=Math.round(m/60); if(h<24) return h+'h ago';
+  return Math.round(h/24)+'d ago';
+}
+
+function anim(id,end){
+  const el=$(id); if(!el) return;
+  const dur=900,t0=performance.now();
+  (function step(now){
+    const p=Math.min((now-t0)/dur,1),e=1-Math.pow(1-p,3);
+    el.textContent=Math.round(e*end).toLocaleString();
+    if(p<1) requestAnimationFrame(step);
+  })(t0);
+}
+
+function makeSpark(id,vals,color){
+  const el=$(id); if(!el) return; el.innerHTML='';
+  const max=Math.max(...vals,1);
+  vals.forEach(v=>{
+    const b=document.createElement('div'); b.className='skb';
+    b.style.cssText=`height:3px;background:${color};opacity:${0.2+0.8*(v/max)};border-radius:2px`;
+    el.appendChild(b);
+    setTimeout(()=>{b.style.height=Math.round(3+27*(v/max))+'px';},100);
+  });
+}
+
+function setHbar(fillId,valId,pct,label){
+  const f=$(fillId); if(f){ f.style.transition='width 1.2s cubic-bezier(.4,0,.2,1)'; requestAnimationFrame(()=>{ f.style.width=Math.min(100,Math.max(0,pct))+'%'; }); }
+  const v=$(valId); if(v) v.textContent=label;
+}
+
+function setIbar(barId,valId,val,max,label){
+  const pct=max>0?Math.min(100,Math.round(val/max*100)):0;
+  const b=$(barId); if(b){ b.style.transition='width 1.2s cubic-bezier(.4,0,.2,1)'; requestAnimationFrame(()=>{ b.style.width=pct+'%'; }); }
+  const v=$(valId); if(v) v.textContent=label;
+}
+
+let _toastT;
+function toast(msg){
+  clearTimeout(_toastT);
+  let t=document.getElementById('_toast');
+  if(!t){t=document.createElement('div');t.id='_toast';t.style.cssText='position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(8px);background:#1a1535;border:1px solid #3a315e;color:#f8f7ff;padding:9px 20px;border-radius:99px;font-size:12px;opacity:0;transition:all .25s;pointer-events:none;z-index:999;font-family:"Plus Jakarta Sans",sans-serif;font-weight:600;box-shadow:0 4px 20px rgba(91,76,245,.3)';document.body.appendChild(t);}
+  t.textContent=msg; t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)';
+  _toastT=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(8px)';},2500);
+}
+</script>
+</body>
+</html>
