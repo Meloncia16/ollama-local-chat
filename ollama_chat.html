@@ -596,7 +596,7 @@ async function send(){
 
   const t0=Date.now();let rtok=0;
   try{
-    const resp=await fetch(getUrl()+'/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const resp=await fetch(getUrl()+'/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'},body:JSON.stringify(payload)});
     if(!resp.ok)throw new Error('HTTP '+resp.status);
     typing.remove();
     const aMsg={role:'assistant',content:'',model:getModel(),time:Date.now()};
@@ -654,7 +654,7 @@ async function sendFromMessage(s,txt){
   };
   const t0=Date.now();let rtok=0;
   try{
-    const resp=await fetch(getUrl()+'/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const resp=await fetch(getUrl()+'/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'},body:JSON.stringify(payload)});
     if(!resp.ok)throw new Error('HTTP '+resp.status);
     typing.remove();
     const aMsg={role:'assistant',content:'',model:getModel(),time:Date.now()};
